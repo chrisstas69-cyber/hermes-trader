@@ -26,7 +26,7 @@ from strategies.congress import (
     generate_copy_trade_signals,
     PELOSI,
 )
-from formatter import format_signal, format_portfolio, format_congress
+from formatter import format_signal, format_portfolio, format_congress, format_sender_report
 
 # ---------------------------------------------------------------------------
 # Colored output helpers (simple ANSI — no external deps)
@@ -473,6 +473,69 @@ def _cmd_congress_execute(trader) -> None:
     print(_bold(f"{'═' * 58}\n"))
 
 
+def cmd_sender(args: argparse.Namespace) -> None:
+    """Show Adam Sender's 13F portfolio report with buys, sells, and copy recommendations."""
+    from strategies.sender import generate_sender_signals, format_sender_report as fmt
+
+    print(_bold(f"\n{'═' * 45}"))
+    print(_bold(_cyan("  📋 ADAM SENDER 13F TRACKER")))
+    print(_bold(f"{'═' * 45}"))
+
+    print("  Fetching 13F filings...")
+    signal_data = generate_sender_signals()
+
+    if not signal_data or not signal_data.get('summary', {}).get('num_positions', 0):
+        print(_yellow("  ⚠ Could not fetch 13F data. Using fallback data.\n"))
+    else:
+        print(_green(f"  ✓ Found {signal_data['summary']['num_positions']} positions\n"))
+
+    report = fmt(signal_data)
+
+    if args.copy:
+        # Show condensed copy signal version
+        print()
+        print(_bold(f"  {'─' * 45}"))
+        print(_bold(_green("  COPY SIGNALS")))
+        print(_bold(f"  {'─' * 45}"))
+        buy_sigs = signal_data.get('buy_signals', [])
+        sell_sigs = signal_data.get('sell_signals', [])
+        for b in buy_sigs:
+            print(f"  {_green('🟢 BUY')}  {_bold(b['ticker']):6s}  {b.get('reason', '')}")
+        for s in sell_sigs:
+            print(f"  {_red('🔴 SELL')} {_bold(s['ticker']):6s}  {s.get('reason', '')}")
+        print()
+        print(_cyan("  To mirror: trade these positions manually via your broker."))
+        print()
+    else:
+        # Full formatted report
+        print(report)
+
+    print(_bold(f"{'═' * 45}\n"))
+
+
+def cmd_briefing(args: argparse.Namespace) -> None:
+    """Generate and display the consolidated daily briefing."""
+    from analyst import consolidated_briefing, format_briefing
+
+    print(_bold(f"\n{'═' * 58}"))
+    print(_bold(_cyan("  📋 CONSOLIDATED DAILY BRIEFING")))
+    print(_bold(f"{'═' * 58}\n"))
+
+    print("  Gathering data from all sources (momentum, congress, sender)...\n")
+
+    brief = consolidated_briefing()
+    formatted = format_briefing(brief)
+
+    # Print to console
+    print(formatted)
+
+    # Telegram delivery
+    if args.telegram:
+        print("\n  Sending to Telegram...")
+        _send_telegram(formatted)
+        print()
+
+
 # ---------------------------------------------------------------------------
 # Friendly extractors for display (don't require congress imports)
 # ---------------------------------------------------------------------------
@@ -530,6 +593,8 @@ Examples:
   python main.py backtest AAPL --days 365 Backtest AAPL for 1 year
   python main.py congress                Show Pelosi trades
   python main.py congress --execute      Mirror Pelosi portfolio
+  python main.py sender                  Show Adam Sender 13F report
+  python main.py sender --copy           Show copy signals only
         """,
     )
 
@@ -555,6 +620,14 @@ Examples:
     congress_parser = subparsers.add_parser("congress", help="Track congressional trades (Pelosi)")
     congress_parser.add_argument("--execute", action="store_true", help="Execute copy trades to mirror Pelosi's portfolio")
 
+    # sender
+    sender_parser = subparsers.add_parser("sender", help="Track Adam Sender's 13F portfolio")
+    sender_parser.add_argument("--copy", action="store_true", help="Show copy-trade signals only")
+
+    # briefing
+    briefing_parser = subparsers.add_parser("briefing", help="Generate consolidated daily briefing from all sources")
+    briefing_parser.add_argument("--telegram", action="store_true", help="Send briefing via Telegram")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -568,6 +641,8 @@ Examples:
         "portfolio": cmd_portfolio,
         "backtest": cmd_backtest,
         "congress": cmd_congress,
+        "sender": cmd_sender,
+        "briefing": cmd_briefing,
     }
 
     try:
