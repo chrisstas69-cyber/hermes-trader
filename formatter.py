@@ -237,3 +237,17 @@ def format_congress(politician_name: str, trades: list, recommendations: list) -
     lines.append("⚡ `/congress --execute` to mirror portfolio")
 
     return "\n".join(lines)
+
+
+def format_sender_report(signal_data: dict) -> str:
+    """
+    Format Adam Sender's 13F portfolio report as a Telegram message.
+
+    Args:
+        signal_data: Output from strategies.sender.generate_sender_signals().
+
+    Returns:
+        Formatted Telegram message string.
+    """
+    from strategies.sender import format_sender_report as _raw_format
+    return _raw_format(signal_data)
