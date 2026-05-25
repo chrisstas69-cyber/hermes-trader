@@ -245,7 +245,7 @@ class MomentumStrategy:
         Returns:
             Signal dict with action, confidence, score components, and reasoning.
         """
-        if df is None or len(df) < 50:
+        if df is None or len(df) < 20:
             return {
                 "symbol": symbol,
                 "action": "HOLD",

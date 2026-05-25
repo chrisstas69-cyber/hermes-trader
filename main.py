@@ -21,7 +21,6 @@ from config import CFG, validate_config
 from trader import HermesTrader
 from strategies.momentum import MomentumStrategy
 from strategies.congress import (
-    CongressTracker,
     fetch_congress_trades,
     build_pelosi_portfolio,
     generate_copy_trade_signals,
@@ -299,7 +298,7 @@ def cmd_backtest(args: argparse.Namespace) -> None:
     def momentum_strategy(df):
         """Strategy function compatible with Backtester signature."""
         ms = MomentumStrategy()
-        if df is None or len(df) < 50:
+        if df is None or len(df) < 20:
             return []
         # We generate signals for every row where we have sufficient data
         signals = []

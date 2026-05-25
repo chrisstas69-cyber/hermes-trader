@@ -169,11 +169,22 @@ class HermesTrader:
             tf_map = {
                 "1Day": TimeFrame.Day,
                 "1Hour": TimeFrame.Hour,
-                "15Min": TimeFrame.Minute(15),
-                "5Min": TimeFrame.Minute(5),
-                "1Min": TimeFrame.Minute(1),
+                "15Min": TimeFrame.Minute,
+                "5Min": TimeFrame.Minute,
+                "1Min": TimeFrame.Minute,
             }
             tf = tf_map.get(timeframe, TimeFrame.Day)
+
+            # For custom minute/hour amounts, construct manually
+            if timeframe == "15Min":
+                import alpaca.data.timeframe as tfm
+                tf = tfm.TimeFrame(15, tfm.TimeFrameUnit.Minute)
+            elif timeframe == "5Min":
+                import alpaca.data.timeframe as tfm
+                tf = tfm.TimeFrame(5, tfm.TimeFrameUnit.Minute)
+            elif timeframe == "1Min":
+                import alpaca.data.timeframe as tfm
+                tf = tfm.TimeFrame(1, tfm.TimeFrameUnit.Minute)
 
             end = datetime.now()
             start = end - timedelta(days=days)
@@ -280,7 +291,7 @@ class HermesTrader:
         Returns:
             Signal dict with action, confidence, price, indicators, and reasoning.
         """
-        df = self.get_historical_data(symbol, days=60)
+        df = self.get_historical_data(symbol, days=90)
         if df is None or len(df) < 20:
             return {
                 "symbol": symbol,

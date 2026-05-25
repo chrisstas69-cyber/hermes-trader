@@ -91,8 +91,8 @@ class Backtester:
 
         # Filter to backtest date range
         df = df.copy()
-        df = df[df.index <= pd.Timestamp(end_date)]
-        df = df[df.index >= pd.Timestamp(start_date)]
+        df = df[df.index <= pd.Timestamp(end_date).tz_localize('UTC')]
+        df = df[df.index >= pd.Timestamp(start_date).tz_localize('UTC')]
         if len(df) < 20:
             logger.warning("Insufficient data in date range for %s", symbol)
             return pd.DataFrame(), []
@@ -121,7 +121,7 @@ class Backtester:
 
             # Get the window up to this point for the strategy
             lookback = df_full.loc[:date_ts].copy() if date_ts in df_full.index else df.loc[:date_ts].copy()
-            if len(lookback) < 50:
+            if len(lookback) < 20:
                 continue
 
             signals = strategy_func(lookback)
