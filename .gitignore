@@ -1,2 +1,9 @@
-.env\n__pycache__/\n*.pyc\ndata/\n.venv\nvenv/\n.DS_Store
+.env
 __pycache__/
+*.pyc
+data/
+.venv
+venv/
+.DS_Store
+*.html
+dashboard/
